@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ display_name }} - NanTube</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+    :root {
+        --primary-orange: #ff6d00;
+        --primary-blue: #2962ff;
+        --background: #ffffff;
+        --surface: #f9f9f9;
+        --on-background: #030303;
+        --on-surface: #606060;
+        --border: #e5e5e5;
+        --hover: #f2f2f2;
+    }
+
+    [data-theme="dark"] {
+        --background: #0f0f0f;
+        --surface: #272727;
+        --on-background: #f1f1f1;
+        --on-surface: #aaa;
+        --border: #373737;
+        --hover: #272727;
+    }
+
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: 'Roboto', Arial, sans-serif;
+        background-color: var(--background);
+        color: var(--on-background);
+        line-height: 1.5;
+        overflow-x: hidden;
+        touch-action: pan-y;
+    }
+
+    /* Вертикальный контейнер с боковой панелью - УМЕНЬШЕН ВЕРХНИЙ ПРОМЕЖУТОК */
+    .vertical-layout {
+        display: flex;
+        min-height: calc(100vh - 56px);
+        margin-top: 56px;
+    }
+
+    .vertical-sidebar {
+        width: 240px;
+        background-color: var(--background);
+        border-right: 1px solid var(--border);
+        position: fixed;
+        top: 56px;
+        bottom: 0;
+        left: 0;
+        overflow-y: auto;
+        z-index: 999;
+        transition: transform 0.3s ease;
+    }
+
+    .vertical-main {
+        flex: 1;
+        margin-left: 240px;
+        padding: 10px; /* Уменьшено с 20px */
+        background-color: var(--background);
+        min-height: calc(100vh - 56px);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start; /* Изменено с center */
+    }
+
+    /* Vertical Video Content */
+    .vertical-content {
+        width: 100%;
+        max-width: 600px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start; /* Изменено с center */
+        padding: 10px; /* Уменьшено с 20px */
+        position: relative;
+    }
+
+    .vertical-video-wrapper {
+        display: flex;
+        gap: 20px;
+        align-items: flex-start;
+        width: 100%;
+        justify-content: center;
+        margin-top: 0; /* Добавлено */
+    }
+
+    .video-container {
+        flex: 1;
+        background-color: #000;
+        position: relative;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border-radius: 12px;
+        overflow: hidden;
+        max-width: 400px;
+        height: 700px;
+        min-height: 700px;
+    }
+
+    .video-player {
+        width: 100%;
+        height: 100%;
+        display: block;
+        object-fit: contain;
+    }
+
+    /* Круглые кнопки действий - ВСЕГДА СПРАВА ОТ ВИДЕО */
+    .vertical-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        margin-left: 20px;
+        align-items: center;
+    }
+
+    .round-btn {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        border: none;
+        background-color: var(--surface);
+        color: var(--on-background);
+        font-size: 24px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .round-btn:hover {
+        transform: scale(1.05);
+        background-color: var(--hover);
+    }
+
+    .round-btn.liked {
+        background-color: var(--primary-blue);
+        color: white;
+    }
+
+    /* Навигационные стрелки */
+    .nav-arrow-btn {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        border: none;
+        background-color: var(--surface);
+        color: var(--on-background);
+        font-size: 24px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        font-weight: bold;
+    }
+
+    .nav-arrow-btn:hover {
+        background-color: var(--hover);
+        transform: scale(1.05);
+    }
+
+    /* Дополнительные стили для уменьшения верхнего отступа на ПК */
+    @media (min-width: 769px) {
+        .vertical-main {
+            padding-top: 5px; /* Еще уменьшено сверху */
+        }
+        
+        .vertical-content {
+            padding-top: 5px; /* Еще уменьшено сверху */
+        }
+        
+        .video-info {
+            margin-top: 15px; /* Уменьшено с 20px */
+        }
+    }
+
+    /* Mobile Styles - НО ПАНЕЛЬ ОСТАЕТСЯ СПРАВА */
+    @media (max-width: 768px) {
+        .vertical-sidebar {
+            display: none;
+        }
+        
+        .vertical-main {
+            margin-left: 0;
+            padding: 5px; /* Уменьшено для мобильных */
+            justify-content: flex-start;
+        }
+        
+        .vertical-content {
+            padding: 5px; /* Уменьшено для мобильных */
+            max-width: 100%;
+            justify-content: flex-start;
+        }
+        
+        .vertical-video-wrapper {
+            flex-direction: row; /* Всегда горизонтально */
+            gap: 10px; /* Уменьшено с 15px */
+            align-items: flex-start;
+            justify-content: center;
+            width: 100%;
+            margin-top: 0;
+        }
+        
+        .video-container {
+            width: 70%; /* Видео занимает 70% ширины */
+            max-width: 300px;
+            height: 500px;
+            min-height: 500px;
+        }
+        
+        .vertical-actions {
+            margin-left: 8px; /* Уменьшено с 10px */
+            gap: 10px; /* Уменьшено с 12px */
+        }
+        
+        .round-btn, .nav-arrow-btn {
+            width: 50px;
+            height: 50px;
+            font-size: 20px;
+        }
+        
+        /* Информация о видео под контейнером */
+        .video-info-mobile {
+            width: 100%;
+            text-align: left;
+            margin-top: 8px; /* Уменьшено */
+            max-width: 400px;
+        }
+    }
+
+    /* Для очень маленьких телефонов */
+    @media (max-width: 480px) {
+        .vertical-main {
+            padding: 2px; /* Еще уменьшено */
+        }
+        
+        .vertical-content {
+            padding: 2px; /* Еще уменьшено */
+        }
+        
+        .vertical-video-wrapper {
+            gap: 8px; /* Уменьшено */
+        }
+        
+        .video-container {
+            width: 65%; /* Видео немного меньше */
+            max-width: 280px;
+            height: 450px;
+            min-height: 450px;
+        }
+        
+        .vertical-actions {
+            margin-left: 6px; /* Уменьшено */
+            gap: 8px; /* Уменьшено */
+        }
+        
+        .round-btn, .nav-arrow-btn {
+            width: 45px;
+            height: 45px;
+            font-size: 18px;
+        }
+    }
+
+    /* Для очень узких экранов (меньше 360px) */
+    @media (max-width: 360px) {
+        .video-container {
+            width: 60%;
+            max-width: 200px;
+            height: 350px;
+            min-height: 350px;
+        }
+        
+        .vertical-actions {
+            margin-left: 4px; /* Уменьшено */
+            gap: 6px; /* Уменьшено */
+        }
+        
+        .round-btn, .nav-arrow-btn {
+            width: 40px;
+            height: 40px;
+            font-size: 16px;
+        }
+    }
+</style>
+</head>
+<body>
+    <!-- Шапка -->
+    <header class="youtube-header">
+        <div class="header-left">
+            <button class="menu-toggle" id="menuToggle">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M3 18H21V16H3V18ZM3 13H21V11H3V13ZM3 6V8H21V6H3Z" fill="currentColor"/>
+                </svg>
+            </button>
+            <a href="{{ url_for('index') }}" class="logo">
+                <div class="logo-container">
+                    <div class="logo-icon">
+                        <svg width="90" height="20" viewBox="0 0 90 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M27.58 10.22L25.24 7.88V12.56L27.58 10.22Z" fill="#FF6B35"/>
+                            <path d="M19.67 4.34C17.45 4.34 15.64 6.15 15.64 8.37V11.63C15.64 13.85 17.45 15.66 19.67 15.66C21.89 15.66 23.7 13.85 23.7 11.63V8.37C23.7 6.15 21.89 4.34 19.67 4.34Z" fill="#FF6B35"/>
+                        </svg>
+                    </div>
+                    <span class="logo-text">NanTube</span>
+                </div>
+            </a>
+        </div>
+        
+        <!-- Поисковая строка -->
+        <div class="search-container youtube-search">
+            <div class="search-box youtube-search-box">
+                <input type="text" class="search-input youtube-search-input" id="searchInput" 
+                       placeholder="Поиск видео...">
+                <button class="search-button youtube-search-button" id="searchButton">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M15.5 14H14.71L14.43 13.73C15.41 12.59 16 11.11 16 9.5C16 5.91 13.09 3 9.5 3C5.91 3 3 5.91 3 9.5C3 13.09 5.91 16 9.5 16C11.11 16 12.59 15.41 13.73 14.43L14 14.71V15.5L19 20.49L20.49 19L15.5 14ZM9.5 14C7.01 14 5 11.99 5 9.5C5 7.01 7.01 5 9.5 5C11.99 5 14 7.01 14 9.5C14 11.99 11.99 14 9.5 14Z" fill="currentColor"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <div class="header-right">
+            <a href="{{ url_for('upload_file') }}" class="header-btn upload-btn">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M14 13V17H10V13H7L12 8L17 13H14ZM19 19H5V21H19V19Z" fill="currentColor"/>
+                </svg>
+                <span class="btn-text">Загрузить</span>
+            </a>
+            <a href="{{ url_for('settings') }}" class="header-btn">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 15.5C13.93 15.5 15.5 13.93 15.5 12C15.5 10.07 13.93 8.5 12 8.5C10.07 8.5 8.5 10.07 8.5 12C8.5 13.93 10.07 15.5 12 15.5ZM12 10.5C12.83 10.5 13.5 11.17 13.5 12C13.5 12.83 12.83 13.5 12 13.5C11.17 13.5 10.5 12.83 10.5 12C10.5 11.17 11.17 10.5 12 10.5ZM5.05 19H7C7 17.9 7.9 17 9 17H15C16.1 17 17 17.9 17 19H18.95C18.45 15.17 15.83 12.55 12 12.05V10H10V12.05C6.17 12.55 3.55 15.17 3.05 19H5.05ZM19 19H21C20.5 14.83 17.17 11.5 13 11V9H11V11C6.83 11.5 3.5 14.83 3 19H5C5.5 15.83 8.17 13 12 13C15.83 13 18.5 15.83 19 19Z" fill="currentColor"/>
+                </svg>
+            </a>
+            <button class="theme-toggle header-btn" id="themeToggle">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22ZM12 20V4C16.4183 4 20 7.58172 20 12C20 16.4183 16.4183 20 12 20Z" fill="currentColor"/>
+                </svg>
+            </button>
+            <div class="user-avatar">NT</div>
+        </div>
+    </header>
+
+    <!-- Основной контент с боковой панелью -->
+    <div class="vertical-layout">
+        <!-- Боковая панель -->
+        <aside class="vertical-sidebar">
+            <nav class="sidebar-nav">
+                <a href="{{ url_for('index') }}" class="sidebar-item">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M10 20V14H14V20H19V12H22L12 3L2 12H5V20H10Z" fill="currentColor"/>
+                    </svg>
+                    Главная
+                </a>
+                <a href="{{ url_for('random_vertical') }}" class="sidebar-item active">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M17.77 10.32c-.77-.32-1.2-.5-1.2-.5L18 9.06c1.84-.96 2.15-4.71.39-5.65-1.76-.94-4.08.52-4.3 2.58-.09.84.14 1.63.57 2.29l-3.06 1.68c-.65-.34-1.17-.5-1.17-.5L10 7.5c1.84-.96 2.15-4.71.39-5.65-1.76-.94-4.08.52-4.3 2.58-.09.84.14 1.63.57 2.29L4.5 8.5c-1.2.66-1.65 2.1-.99 3.3.66 1.2 2.1 1.65 3.3.99l3.06-1.68c.65.34 1.17.5 1.17.5L11 14.5c-1.84.96-2.15 4.71-.39 5.65 1.76.94 4.08-.52 4.3-2.58.09-.84-.14-1.63-.57-2.29l3.06-1.68c1.2-.66 1.65-2.1.99-3.3-.66-1.2-2.1-1.65-3.3-.99z" fill="currentColor"/>
+                    </svg>
+                    Shorts
+                </a>
+                <a href="{{ url_for('upload_file') }}" class="sidebar-item">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M14 13V17H10V13H7L12 8L17 13H14ZM19 19H5V21H19V19Z" fill="currentColor"/>
+                    </svg>
+                    Загрузить
+                </a>
+                <a href="{{ url_for('settings') }}" class="sidebar-item">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 15.5C13.93 15.5 15.5 13.93 15.5 12C15.5 10.07 13.93 8.5 12 8.5C10.07 8.5 8.5 10.07 8.5 12C8.5 13.93 10.07 15.5 12 15.5ZM12 10.5C12.83 10.5 13.5 11.17 13.5 12C13.5 12.83 12.83 13.5 12 13.5C11.17 13.5 10.5 12.83 10.5 12C10.5 11.17 11.17 10.5 12 10.5ZM5.05 19H7C7 17.9 7.9 17 9 17H15C16.1 17 17 17.9 17 19H18.95C18.45 15.17 15.83 12.55 12 12.05V10H10V12.05C6.17 12.55 3.55 15.17 3.05 19H5.05ZM19 19H21C20.5 14.83 17.17 11.5 13 11V9H11V11C6.83 11.5 3.5 14.83 3 19H5C5.5 15.83 8.17 13 12 13C15.83 13 18.5 15.83 19 19Z" fill="currentColor"/>
+                    </svg>
+                    Настройки
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Основной контент -->
+        <main class="vertical-main">
+            <div class="vertical-content">
+                <div class="vertical-video-wrapper">
+                    <div class="video-container">
+                        <video class="video-player" controls autoplay id="verticalVideo">
+                            <source src="{{ url_for('serve_video', filename=filename) }}" type="video/mp4">
+                            Ваш браузер не поддерживает видео тег.
+                        </video>
+                    </div>
+                    
+                    <!-- Круглые кнопки действий ВСЕГДА СПРАВА -->
+                    <div class="vertical-actions">
+                        <!-- Стрелка вверх для предыдущего видео -->
+                        <button class="nav-arrow-btn" id="upArrowMobile">↑</button>
+                        
+                        <!-- Основные действия -->
+                        <button class="round-btn like-btn" id="verticalLikeBtn">👍</button>
+                        <button class="round-btn share-btn" id="verticalShareBtn">🔗</button>
+                        <button class="round-btn download-btn" id="verticalDownloadBtn">⬇️</button>
+                        
+                        <!-- Стрелка вниз для следующего видео -->
+                        <button class="nav-arrow-btn" id="downArrowMobile">↓</button>
+                    </div>
+                </div>
+                
+
+            </div>
+        </main>
+    </div>
+
+    <!-- Мобильная навигация -->
+    <nav class="mobile-nav">
+        <a href="{{ url_for('index') }}" class="mobile-nav-item">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M10 20V14H14V20H19V12H22L12 3L2 12H5V20H10Z" fill="currentColor"/>
+            </svg>
+            <span>Главная</span>
+        </a>
+        <a href="{{ url_for('random_vertical') }}" class="mobile-nav-item active">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M17.77 10.32c-.77-.32-1.2-.5-1.2-.5L18 9.06c1.84-.96 2.15-4.71.39-5.65-1.76-.94-4.08.52-4.3 2.58-.09.84.14 1.63.57 2.29l-3.06 1.68c-.65-.34-1.17-.5-1.17-.5L10 7.5c1.84-.96 2.15-4.71.39-5.65-1.76-.94-4.08.52-4.3 2.58-.09.84.14 1.63.57 2.29L4.5 8.5c-1.2.66-1.65 2.1-.99 3.3.66 1.2 2.1 1.65 3.3.99l3.06-1.68c.65.34 1.17.5 1.17.5L11 14.5c-1.84.96-2.15 4.71-.39 5.65 1.76.94 4.08-.52 4.3-2.58.09-.84-.14-1.63-.57-2.29l3.06-1.68c1.2-.66 1.65-2.1.99-3.3-.66-1.2-2.1-1.65-3.3-.99z" fill="currentColor"/>
+            </svg>
+            <span>Shorts</span>
+        </a>
+    </nav>
+
+    <script>
+        // Инициализация темы
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            
+            const themeToggle = document.getElementById('themeToggle');
+            if (themeToggle) {
+                updateThemeIcon(themeToggle, savedTheme);
+                
+                themeToggle.addEventListener('click', function() {
+                    const currentTheme = document.documentElement.getAttribute('data-theme');
+                    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                    document.documentElement.setAttribute('data-theme', newTheme);
+                    localStorage.setItem('theme', newTheme);
+                    updateThemeIcon(this, newTheme);
+                });
+            }
+        }
+
+        function updateThemeIcon(button, theme) {
+            if (theme === 'dark') {
+                button.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 7C14.76 7 17 9.24 17 12C17 14.76 14.76 17 12 17C9.24 17 7 14.76 7 12C7 9.24 9.24 7 12 7ZM12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM12 20C7.58 20 4 16.42 4 12C4 7.58 7.58 4 12 4C16.42 4 20 7.58 20 12C20 16.42 16.42 20 12 20Z" fill="currentColor"/></svg>';
+            } else {
+                button.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22ZM12 20V4C16.4183 4 20 7.58172 20 12C20 16.4183 16.4183 20 12 20Z" fill="currentColor"/></svg>';
+            }
+        }
+
+        // Глобальные переменные для хранения списка видео и текущего индекса
+        let videoList = [];
+        let currentVideoIndex = -1;
+
+        // Навигация по вертикальным видео
+        function initNavigation() {
+            // Загружаем список видео
+            loadVideoList().then(() => {
+                // Добавляем обработчик клавиатуры для ПК
+                document.addEventListener('keydown', handleKeyboardNavigation);
+                
+                // Добавляем обработчики для стрелок (работают и на ПК, и на телефоне)
+                const upArrowMobile = document.getElementById('upArrowMobile');
+                const downArrowMobile = document.getElementById('downArrowMobile');
+                
+                if (upArrowMobile) {
+                    upArrowMobile.addEventListener('click', navigateToPreviousVideo);
+                }
+                
+                if (downArrowMobile) {
+                    downArrowMobile.addEventListener('click', navigateToNextVideo);
+                }
+
+                // Инициализация автопрокрутки
+                initAutoscroll();
+            });
+        }
+
+        // Инициализация автопрокрутки
+        function initAutoscroll() {
+            const video = document.getElementById('verticalVideo');
+            const autoscrollEnabled = localStorage.getItem('autoscroll') === 'true';
+            const videoLoopEnabled = localStorage.getItem('videoLoop') === 'true';
+            
+            if (video) {
+                if (autoscrollEnabled) {
+                    video.addEventListener('ended', handleVideoEnded);
+                }
+                
+                if (videoLoopEnabled) {
+                    video.loop = true;
+                }
+            }
+        }
+
+        // Обработчик окончания видео
+        function handleVideoEnded() {
+            navigateToNextVideo();
+        }
+
+        // Загрузка списка видео в алфавитном порядке
+        async function loadVideoList() {
+            try {
+                const response = await fetch('/api/vertical_videos_list');
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                const data = await response.json();
+                videoList = data.videos || [];
+                
+                // Находим индекс текущего видео
+                currentVideoIndex = videoList.findIndex(video => video === '{{ filename }}');
+            } catch (error) {
+                console.error('Ошибка при загрузке списка видео:', error);
+            }
+        }
+
+        // Обработка навигации с клавиатуры
+        function handleKeyboardNavigation(event) {
+            // Стрелка вниз или пробел для следующего видео
+            if (event.key === 'ArrowDown' || event.key === ' ') {
+                event.preventDefault();
+                navigateToNextVideo();
+            }
+            // Стрелка вверх для предыдущего видео
+            else if (event.key === 'ArrowUp') {
+                event.preventDefault();
+                navigateToPreviousVideo();
+            }
+        }
+
+        // Переход к следующему видео (циклическая навигация)
+        function navigateToNextVideo() {
+            if (videoList.length === 0) return;
+            
+            let nextIndex;
+            if (currentVideoIndex === videoList.length - 1) {
+                nextIndex = 0;
+            } else {
+                nextIndex = currentVideoIndex + 1;
+            }
+            
+            const nextVideo = videoList[nextIndex];
+            window.location.href = '/vertical/' + encodeURIComponent(nextVideo);
+        }
+
+        // Переход к предыдущему видео (циклическая навигация)
+        function navigateToPreviousVideo() {
+            if (videoList.length === 0) return;
+            
+            let prevIndex;
+            if (currentVideoIndex === 0) {
+                prevIndex = videoList.length - 1;
+            } else {
+                prevIndex = currentVideoIndex - 1;
+            }
+            
+            const prevVideo = videoList[prevIndex];
+            window.location.href = '/vertical/' + encodeURIComponent(prevVideo);
+        }
+
+        // Video actions для вертикального видео
+        const verticalLikeBtn = document.getElementById('verticalLikeBtn');
+        let verticalLiked = false;
+        
+        verticalLikeBtn.addEventListener('click', () => {
+            verticalLiked = !verticalLiked;
+            if (verticalLiked) {
+                verticalLikeBtn.classList.add('liked');
+                verticalLikeBtn.innerHTML = '❤️';
+            } else {
+                verticalLikeBtn.classList.remove('liked');
+                verticalLikeBtn.innerHTML = '👍';
+            }
+        });
+
+        // Download functionality
+        function downloadVideo() {
+            const videoUrl = "{{ url_for('serve_video', filename=filename) }}";
+            const a = document.createElement('a');
+            a.href = videoUrl;
+            a.download = '{{ display_name }}';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        // Добавляем обработчик для вертикальной кнопки скачивания
+        document.getElementById('verticalDownloadBtn').addEventListener('click', downloadVideo);
+
+        // Поиск
+        function performSearch() {
+            const searchTerm = document.getElementById('searchInput').value.trim();
+            if (searchTerm) {
+                window.location.href = "{{ url_for('index') }}?search=" + encodeURIComponent(searchTerm);
+            }
+        }
+
+        document.getElementById('searchButton').addEventListener('click', performSearch);
+        document.getElementById('searchInput').addEventListener('keyup', (event) => {
+            if (event.key === 'Enter') {
+                performSearch();
+            }
+        });
+
+        // Инициализация при загрузке
+        window.addEventListener('load', () => {
+            initTheme();
+            initNavigation();
+        });
+    </script>
+</body>
+</html>

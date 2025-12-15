@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <title>Консоль - NanTube</title>
+    <style>
+        :root {
+            --primary-orange: #ff6d00;
+            --primary-blue: #2962ff;
+            --background: #ffffff;
+            --surface: #f9f9f9;
+            --on-background: #030303;
+            --on-surface: #606060;
+            --border: #e5e5e5;
+            --hover: #f2f2f2;
+        }
+
+        [data-theme="dark"] {
+            --background: #0f0f0f;
+            --surface: #272727;
+            --on-background: #f1f1f1;
+            --on-surface: #aaa;
+            --border: #373737;
+            --hover: #272727;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        body {
+            font-family: 'Roboto', Arial, sans-serif;
+            background-color: var(--background);
+            color: var(--on-background);
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 16px;
+        }
+
+        /* Header Styles */
+        header {
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
+            height: 56px;
+            background-color: var(--background);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            gap: 20px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--primary-orange);
+            text-decoration: none;
+            flex-shrink: 0;
+        }
+
+        .logo span {
+            color: var(--primary-blue);
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 12px;
+            flex-shrink: 0;
+            margin-left: auto;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border-radius: 18px;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-blue);
+            color: white;
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            border: 1px solid var(--border);
+            color: var(--on-background);
+        }
+
+        .theme-toggle, .settings-toggle {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 20px;
+            color: var(--on-background);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s;
+        }
+
+        .theme-toggle:hover, .settings-toggle:hover {
+            background-color: var(--hover);
+        }
+
+        .settings-button {
+            padding: 8px 16px;
+            border-radius: 18px;
+            font-weight: 500;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background-color: transparent;
+            border: 1px solid var(--border);
+            color: var(--on-background);
+            transition: all 0.2s;
+        }
+
+        .settings-button:hover {
+            background-color: var(--hover);
+            border-color: var(--primary-blue);
+            color: var(--primary-blue);
+        }
+
+        /* Main Content */
+        main {
+            padding: 60px 0 24px 0;
+            min-height: calc(100vh - 56px);
+        }
+
+        .console-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 16px;
+        }
+
+        .console-header {
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .console-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: var(--primary-orange);
+        }
+
+        .console-header p {
+            color: var(--on-surface);
+            font-size: 1.1rem;
+        }
+
+        .console-content {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 24px;
+        }
+
+        .console-card {
+            background-color: var(--surface);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--border);
+        }
+
+        .console-card h2 {
+            color: var(--primary-blue);
+            margin-bottom: 16px;
+            font-size: 1.5rem;
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 8px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 16px;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .info-item:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-weight: 500;
+            color: var(--on-background);
+        }
+
+        .info-value {
+            color: var(--on-surface);
+            text-align: right;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-online {
+            background-color: #4caf50;
+        }
+
+        .status-offline {
+            background-color: #f44336;
+        }
+
+        .console-actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        .log-output {
+            background-color: var(--background);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            color: var(--on-background);
+            max-height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+
+        .log-entry {
+            margin-bottom: 8px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .log-time {
+            color: var(--primary-blue);
+            font-weight: bold;
+        }
+
+        .log-message {
+            color: var(--on-background);
+        }
+
+        .back-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            background-color: var(--primary-blue);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: background-color 0.2s;
+            margin-top: 20px;
+        }
+
+        .back-button:hover {
+            background-color: #1e4dd8;
+        }
+
+        /* Flash Messages */
+        .flash-messages {
+            list-style-type: none;
+            padding: 0 16px;
+            margin-bottom: 16px;
+        }
+
+        .flash-messages li {
+            padding: 12px 16px;
+            margin: 10px 0;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+
+        .flash-success {
+            background-color: rgba(76, 175, 80, 0.1);
+            color: #4caf50;
+            border: 1px solid rgba(76, 175, 80, 0.2);
+        }
+
+        .flash-error {
+            background-color: rgba(244, 67, 54, 0.1);
+            color: #f44336;
+            border: 1px solid rgba(244, 67, 54, 0.2);
+        }
+
+        /* Мобильная адаптация */
+        @media (max-width: 768px) {
+            header {
+                flex-wrap: wrap;
+                height: auto;
+                padding: 8px 16px;
+                gap: 12px;
+            }
+            
+            .logo {
+                order: 1;
+                font-size: 18px;
+            }
+            
+            .nav-buttons {
+                order: 2;
+                margin-left: 0;
+            }
+            
+            .console-header h1 {
+                font-size: 2rem;
+            }
+            
+            .console-card {
+                padding: 16px;
+            }
+            
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .console-actions {
+                flex-direction: column;
+            }
+            
+            .btn, .settings-button {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 0 12px;
+            }
+            
+            header {
+                padding: 8px 12px;
+            }
+            
+            .logo {
+                font-size: 16px;
+            }
+            
+            .console-header h1 {
+                font-size: 1.75rem;
+            }
+            
+            .console-card {
+                padding: 12px;
+            }
+            
+            .info-item {
+                flex-direction: column;
+                gap: 4px;
+            }
+            
+            .info-value {
+                text-align: left;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <a href="{{ url_for('index') }}" class="logo">NanTube</a>
+        
+        <div class="nav-buttons">
+            <a href="{{ url_for('upload_file') }}" class="btn btn-primary">Загрузить</a>
+            <a href="{{ url_for('settings') }}" class="settings-button">Настройки</a>
+            <button class="theme-toggle" id="themeToggle" title="Сменить тему">🌙</button>
+        </div>
+    </header>
+
+    <main>
+        <div class="console-container">
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    <ul class="flash-messages">
+                    {% for message in messages %}
+                        <li class="{% if 'успешно' in message %}flash-success{% else %}flash-error{% endif %}">
+                            {{ message }}
+                        </li>
+                    {% endfor %}
+                    </ul>
+                {% endif %}
+            {% endwith %}
+
+            <div class="console-header">
+                <h1>Консоль сайта</h1>
+                <p>Мониторинг системы и управление сайтом</p>
+            </div>
+
+            <div class="console-content">
+                <div class="console-card">
+                    <h2>Статус системы</h2>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <span class="info-label">Статус сервера:</span>
+                            <span class="info-value">
+                                <span class="status-indicator status-online"></span>
+                                Онлайн
+                            </span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Время работы:</span>
+                            <span class="info-value">---</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Последнее обновление:</span>
+                            <span class="info-value" id="lastUpdateTime">---</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Пользователей онлайн:</span>
+                            <span class="info-value">---</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="console-card">
+                    <h2>Информация о системе</h2>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <span class="info-label">Операционная система:</span>
+                            <span class="info-value" id="osInfo">---</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Версия Python:</span>
+                            <span class="info-value" id="pythonVersion">---</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Версия Flask:</span>
+                            <span class="info-value" id="flaskVersion">---</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Папка с видео:</span>
+                            <span class="info-value">E:\videos</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="console-card">
+                    <h2>Быстрые действия</h2>
+                    <div class="console-actions">
+                        <button class="btn btn-primary" onclick="refreshSystemInfo()">Обновить информацию</button>
+                        <button class="btn btn-outline" onclick="clearConsoleLogs()">Очистить логи</button>
+                        <button class="btn btn-outline" onclick="restartScanner()">Перезапустить сканер</button>
+                        <button class="btn btn-outline" onclick="showSystemLogs()">Показать логи системы</button>
+                    </div>
+                </div>
+
+                <div class="console-card">
+                    <h2>Журнал событий</h2>
+                    <div class="log-output" id="logOutput">
+                        <div class="log-entry">
+                            <span class="log-time">[12:00:00]</span>
+                            <span class="log-message">Система запущена и работает нормально</span>
+                        </div>
+                        <div class="log-entry">
+                            <span class="log-time">[11:45:30]</span>
+                            <span class="log-message">Сканирование папки с видео завершено</span>
+                        </div>
+                        <div class="log-entry">
+                            <span class="log-time">[11:30:15]</span>
+                            <span class="log-message">Новый пользователь подключился к системе</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <a href="{{ url_for('settings') }}" class="back-button">
+                ← Назад к настройкам
+            </a>
+        </div>
+    </main>
+
+    <script>
+        // Theme Toggle Functionality
+        const themeToggle = document.getElementById('themeToggle');
+        const currentTheme = localStorage.getItem('theme') || 'light';
+        
+        document.documentElement.setAttribute('data-theme', currentTheme);
+        updateToggleButton(currentTheme);
+        
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateToggleButton(newTheme);
+        });
+        
+        function updateToggleButton(theme) {
+            themeToggle.textContent = theme === 'light' ? '🌙' : '☀️';
+        }
+
+        // System Information
+        function updateSystemInfo() {
+            const now = new Date();
+            document.getElementById('lastUpdateTime').textContent = now.toLocaleString('ru-RU');
+            
+            // Симуляция получения информации о системе
+            document.getElementById('osInfo').textContent = navigator.platform;
+            document.getElementById('pythonVersion').textContent = '3.8+ (симуляция)';
+            document.getElementById('flaskVersion').textContent = '2.0+ (симуляция)';
+        }
+
+        // Console Actions
+        function refreshSystemInfo() {
+            addLogEntry('Обновление информации о системе...');
+            updateSystemInfo();
+            setTimeout(() => {
+                addLogEntry('Информация о системе обновлена');
+            }, 500);
+        }
+
+        function clearConsoleLogs() {
+            const logOutput = document.getElementById('logOutput');
+            logOutput.innerHTML = '<div class="log-entry"><span class="log-time">[' + new Date().toLocaleTimeString('ru-RU') + ']</span><span class="log-message">Логи консоли очищены</span></div>';
+        }
+
+        function restartScanner() {
+            addLogEntry('Перезапуск сканера видео...');
+            setTimeout(() => {
+                addLogEntry('Сканер видео успешно перезапущен');
+            }, 1000);
+        }
+
+        function showSystemLogs() {
+            addLogEntry('Запрос логов системы...');
+            setTimeout(() => {
+                addLogEntry('Логи системы загружены (симуляция)');
+            }, 800);
+        }
+
+        function addLogEntry(message) {
+            const logOutput = document.getElementById('logOutput');
+            const logEntry = document.createElement('div');
+            logEntry.className = 'log-entry';
+            logEntry.innerHTML = `<span class="log-time">[${new Date().toLocaleTimeString('ru-RU')}]</span><span class="log-message">${message}</span>`;
+            logOutput.prepend(logEntry);
+        }
+
+        // Auto-refresh system info every 30 seconds
+        setInterval(updateSystemInfo, 30000);
+
+        // Initialize
+        updateSystemInfo();
+        addLogEntry('Консоль инициализирована');
+    </script>
+</body>
+</html>

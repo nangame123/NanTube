@@ -1,0 +1,1229 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Админ панель - NanTube</title>
+    <style>
+        :root {
+            --primary-orange: #ff6d00;
+            --primary-blue: #2962ff;
+            --primary-red: #f44336;
+            --primary-green: #4caf50;
+            --background: #ffffff;
+            --surface: #f9f9f9;
+            --on-background: #030303;
+            --on-surface: #606060;
+            --border: #e5e5e5;
+            --hover: #f2f2f2;
+        }
+
+        [data-theme="dark"] {
+            --background: #0f0f0f;
+            --surface: #272727;
+            --on-background: #f1f1f1;
+            --on-surface: #aaa;
+            --border: #373737;
+            --hover: #272727;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', Arial, sans-serif;
+            background-color: var(--background);
+            color: var(--on-background);
+            line-height: 1.5;
+            padding: 10px;
+            min-height: 100vh;
+            font-size: 14px;
+        }
+
+        .admin-container {
+            max-width: 100%;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--border);
+        }
+
+        @media (min-width: 768px) {
+            .header {
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+            }
+        }
+
+        .logo {
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--primary-orange);
+            text-decoration: none;
+        }
+
+        .logo span {
+            color: var(--primary-blue);
+        }
+
+        h1 {
+            color: var(--on-background);
+            margin-bottom: 15px;
+            font-size: 22px;
+        }
+
+        h2 {
+            color: var(--on-background);
+            margin: 20px 0 12px 0;
+            font-size: 18px;
+        }
+
+        .back-btn {
+            padding: 10px 16px;
+            background-color: var(--primary-blue);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+            font-size: 14px;
+            width: 100%;
+        }
+
+        @media (min-width: 480px) {
+            .back-btn {
+                width: auto;
+            }
+        }
+
+        .admin-nav {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        @media (min-width: 768px) {
+            .admin-nav {
+                justify-content: flex-start;
+            }
+        }
+
+        .nav-btn {
+            padding: 10px 14px;
+            background-color: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            color: var(--on-background);
+            transition: all 0.2s;
+            font-size: 13px;
+            flex: 1;
+            min-width: 0;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        @media (min-width: 480px) {
+            .nav-btn {
+                flex: none;
+                padding: 10px 16px;
+                font-size: 14px;
+            }
+        }
+
+        .nav-btn.active {
+            background-color: var(--primary-blue);
+            color: white;
+            border-color: var(--primary-blue);
+        }
+
+        .nav-btn:hover {
+            background-color: var(--hover);
+        }
+
+        .admin-section {
+            display: none;
+            background-color: var(--surface);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 1px solid var(--border);
+        }
+
+        .admin-section.active {
+            display: block;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        @media (min-width: 480px) {
+            .stats-grid {
+                grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+                gap: 12px;
+            }
+        }
+
+        .stat-card {
+            background: var(--background);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+
+        .stat-value {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        @media (min-width: 480px) {
+            .stat-value {
+                font-size: 24px;
+            }
+        }
+
+        .stat-label {
+            color: var(--on-surface);
+            font-size: 12px;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            margin-top: 15px;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .video-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 600px;
+        }
+
+        .video-table th,
+        .video-table td {
+            padding: 10px 8px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+            font-size: 13px;
+        }
+
+        @media (min-width: 480px) {
+            .video-table th,
+            .video-table td {
+                padding: 12px;
+                font-size: 14px;
+            }
+        }
+
+        .video-table th {
+            background-color: var(--hover);
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        .video-table tr:hover {
+            background-color: var(--hover);
+        }
+
+        .btn {
+            padding: 6px 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            margin: 2px 1px;
+            white-space: nowrap;
+        }
+
+        @media (min-width: 480px) {
+            .btn {
+                padding: 6px 12px;
+                font-size: 12px;
+            }
+        }
+
+        .btn-danger {
+            background-color: var(--primary-red);
+            color: white;
+        }
+
+        .btn-warning {
+            background-color: #ff9800;
+            color: white;
+        }
+
+        .btn-success {
+            background-color: var(--primary-green);
+            color: white;
+        }
+
+        .btn-info {
+            background-color: var(--primary-blue);
+            color: white;
+        }
+
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 500;
+            display: inline-block;
+        }
+
+        .status-banned {
+            background-color: #ffebee;
+            color: var(--primary-red);
+        }
+
+        .status-active {
+            background-color: #e8f5e8;
+            color: var(--primary-green);
+        }
+
+        .orientation-horizontal {
+            background-color: #e3f2fd;
+            color: var(--primary-blue);
+        }
+
+        .orientation-vertical {
+            background-color: #fff3e0;
+            color: var(--primary-orange);
+        }
+
+        .log-entry {
+            padding: 10px;
+            border-bottom: 1px solid var(--border);
+            font-size: 13px;
+            word-break: break-word;
+        }
+
+        .log-time {
+            color: var(--on-surface);
+            font-size: 11px;
+            margin-top: 4px;
+        }
+
+        .system-info {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+            margin-top: 15px;
+        }
+
+        @media (min-width: 480px) {
+            .system-info {
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            }
+        }
+
+        .system-card {
+            background: var(--background);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .progress-bar {
+            height: 8px;
+            background-color: var(--border);
+            border-radius: 4px;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 4px;
+        }
+
+        .progress-danger {
+            background-color: var(--primary-red);
+        }
+
+        .progress-warning {
+            background-color: #ff9800;
+        }
+
+        .progress-success {
+            background-color: var(--primary-green);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 15px;
+            box-sizing: border-box;
+        }
+
+        .modal-content {
+            background-color: var(--background);
+            padding: 20px;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 500px;
+            border: 1px solid var(--border);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--on-surface);
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s;
+        }
+
+        .modal-close:hover {
+            background-color: var(--hover);
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: var(--surface);
+            color: var(--on-background);
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        @media (max-width: 480px) {
+            .form-actions {
+                justify-content: stretch;
+            }
+            
+            .form-actions button {
+                flex: 1;
+                min-width: 120px;
+            }
+        }
+
+        .flash-messages {
+            list-style-type: none;
+            margin-bottom: 15px;
+        }
+
+        .flash-messages li {
+            padding: 12px 16px;
+            margin: 8px 0;
+            border-radius: 8px;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .flash-success {
+            background-color: rgba(76, 175, 80, 0.1);
+            color: #4caf50;
+            border: 1px solid rgba(76, 175, 80, 0.2);
+        }
+
+        .flash-error {
+            background-color: rgba(244, 67, 54, 0.1);
+            color: #f44336;
+            border: 1px solid rgba(244, 67, 54, 0.2);
+        }
+
+        /* Мобильная навигация */
+        .mobile-nav-toggle {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--on-background);
+            padding: 5px;
+        }
+
+        @media (max-width: 767px) {
+            .admin-nav {
+                flex-direction: column;
+                display: none;
+            }
+            
+            .admin-nav.active {
+                display: flex;
+            }
+            
+            .mobile-nav-toggle {
+                display: block;
+                align-self: flex-end;
+            }
+            
+            .header {
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: flex-start;
+            }
+        }
+
+        /* Карточный вид для мобильных */
+        .video-cards {
+            display: none;
+            gap: 12px;
+            margin-top: 15px;
+        }
+
+        @media (max-width: 767px) {
+            .video-cards {
+                display: grid;
+                grid-template-columns: 1fr;
+            }
+            
+            .table-container {
+                display: none;
+            }
+        }
+
+        .video-card {
+            background: var(--background);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+        }
+
+        .video-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+
+        .video-card-filename {
+            font-weight: bold;
+            word-break: break-word;
+            flex: 1;
+            margin-right: 10px;
+        }
+
+        .video-card-meta {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+
+        .video-card-actions {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+
+        .video-card-actions .btn {
+            flex: 1;
+            min-width: 70px;
+            text-align: center;
+        }
+
+        /* Улучшения для очень маленьких экранов */
+        @media (max-width: 360px) {
+            body {
+                padding: 8px;
+                font-size: 13px;
+            }
+            
+            .admin-section {
+                padding: 12px;
+            }
+            
+            .stat-card {
+                padding: 12px;
+            }
+            
+            .stat-value {
+                font-size: 18px;
+            }
+            
+            .video-card {
+                padding: 12px;
+            }
+            
+            .btn {
+                padding: 5px 8px;
+                font-size: 10px;
+            }
+            
+            .nav-btn {
+                padding: 8px 12px;
+                font-size: 12px;
+            }
+        }
+
+        /* Планшетные улучшения */
+        @media (min-width: 768px) and (max-width: 1024px) {
+            .admin-container {
+                max-width: 95%;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            }
+            
+            .video-table {
+                min-width: 800px;
+            }
+        }
+
+        /* Анимации для мобильных */
+        @media (prefers-reduced-motion: no-preference) {
+            .admin-section {
+                animation: fadeIn 0.3s ease;
+            }
+            
+            @keyframes fadeIn {
+                from { opacity: 0; transform: translateY(10px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+        }
+
+        /* Улучшение доступности */
+        @media (prefers-contrast: high) {
+            .btn {
+                border: 2px solid;
+            }
+            
+            .stat-card {
+                border: 2px solid var(--border);
+            }
+        }
+
+        /* Поддержка темного режима системы */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --background: #0f0f0f;
+                --surface: #272727;
+                --on-background: #f1f1f1;
+                --on-surface: #aaa;
+                --border: #373737;
+                --hover: #272727;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <div class="header">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
+                <a href="{{ url_for('index') }}" class="logo">NanTube <span>Admin</span></a>
+                <button class="mobile-nav-toggle" id="mobileNavToggle">☰</button>
+            </div>
+            <a href="{{ url_for('settings') }}" class="back-btn">← Назад к настройкам</a>
+        </div>
+
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <ul class="flash-messages">
+                {% for message in messages %}
+                    <li class="{% if 'ошибка' in message|lower %}flash-error{% else %}flash-success{% endif %}">
+                        {{ message }}
+                    </li>
+                {% endfor %}
+                </ul>
+            {% endif %}
+        {% endwith %}
+
+        <h1>Админ панель</h1>
+
+        <div class="admin-nav" id="adminNav">
+            <button class="nav-btn active" onclick="showSection('dashboard')">Дашборд</button>
+            <button class="nav-btn" onclick="showSection('videos')">Все видео</button>
+            <button class="nav-btn" onclick="showSection('banned')">Забаненные</button>
+            <button class="nav-btn" onclick="showSection('system')">Система</button>
+            <button class="nav-btn" onclick="showSection('logs')">Логи</button>
+            <button class="nav-btn" onclick="showSection('actions')">Действия</button>
+        </div>
+
+        <!-- Дашборд -->
+        <div id="dashboard" class="admin-section active">
+            <h2>Статистика</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value">{{ stats.total_videos }}</div>
+                    <div class="stat-label">Всего видео</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">{{ stats.banned_videos }}</div>
+                    <div class="stat-label">Забанено</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">{{ stats.total_views }}</div>
+                    <div class="stat-label">Просмотров</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">{{ stats.vertical_videos }}</div>
+                    <div class="stat-label">Вертикальных</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">{{ stats.horizontal_videos }}</div>
+                    <div class="stat-label">Горизонтальных</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">{{ stats.unknown_videos }}</div>
+                    <div class="stat-label">Неопределенных</div>
+                </div>
+            </div>
+
+            <h2>Популярные видео</h2>
+            <div class="table-container">
+                <table class="video-table">
+                    <thead>
+                        <tr>
+                            <th>Видео</th>
+                            <th>Просмотры</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for filename, views in stats.popular_videos %}
+                        <tr>
+                            <td>{{ filename }}</td>
+                            <td>{{ views }}</td>
+                            <td>
+                                <button class="btn btn-info" onclick="viewVideo('{{ filename }}')">Смотреть</button>
+                                <button class="btn btn-warning" onclick="openBanModal('{{ filename }}')">Забанить</button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Все видео -->
+        <div id="videos" class="admin-section">
+            <h2>Все видео ({{ videos|length }})</h2>
+            
+            <!-- Карточный вид для мобильных -->
+            <div class="video-cards">
+                {% for video in videos %}
+                <div class="video-card">
+                    <div class="video-card-header">
+                        <div class="video-card-filename">{{ video[0] }}</div>
+                        <div>
+                            {% if video[2] == 1 %}
+                            <span class="status-badge status-banned">Забанено</span>
+                            {% else %}
+                            <span class="status-badge status-active">Активно</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="video-card-meta">
+                        <span class="status-badge orientation-{{ video[1] }}">{{ video[1] }}</span>
+                        <span>👁️ {{ video[3] }}</span>
+                        <span>📅 {{ video[6][:10] }}</span>
+                    </div>
+                    <div class="video-card-actions">
+                        <button class="btn btn-info" onclick="viewVideo('{{ video[0] }}')">Смотреть</button>
+                        {% if video[2] == 0 %}
+                        <button class="btn btn-warning" onclick="openBanModal('{{ video[0] }}')">Забанить</button>
+                        {% else %}
+                        <button class="btn btn-success" onclick="unbanVideo('{{ video[0] }}')">Разбанить</button>
+                        {% endif %}
+                        <button class="btn btn-danger" onclick="openDeleteModal('{{ video[0] }}')">Удалить</button>
+                        <button class="btn btn-info" onclick="openReorientModal('{{ video[0] }}', '{{ video[1] }}')">Ориентация</button>
+                        <button class="btn btn-info" onclick="openRenameModal('{{ video[0] }}')">Переименовать</button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Табличный вид для десктопа -->
+            <div class="table-container">
+                <table class="video-table">
+                    <thead>
+                        <tr>
+                            <th>Файл</th>
+                            <th>Ориентация</th>
+                            <th>Статус</th>
+                            <th>Просмотры</th>
+                            <th>Дата</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for video in videos %}
+                        <tr>
+                            <td>{{ video[0] }}</td>
+                            <td>
+                                <span class="status-badge orientation-{{ video[1] }}">
+                                    {{ video[1] }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if video[2] == 1 %}
+                                <span class="status-badge status-banned">Забанено</span>
+                                {% else %}
+                                <span class="status-badge status-active">Активно</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ video[3] }}</td>
+                            <td>{{ video[6][:16] }}</td>
+                            <td>
+                                <button class="btn btn-info" onclick="viewVideo('{{ video[0] }}')">Смотреть</button>
+                                {% if video[2] == 0 %}
+                                <button class="btn btn-warning" onclick="openBanModal('{{ video[0] }}')">Забанить</button>
+                                {% else %}
+                                <button class="btn btn-success" onclick="unbanVideo('{{ video[0] }}')">Разбанить</button>
+                                {% endif %}
+                                <button class="btn btn-danger" onclick="openDeleteModal('{{ video[0] }}')">Удалить</button>
+                                <button class="btn btn-info" onclick="openReorientModal('{{ video[0] }}', '{{ video[1] }}')">Изм. ориентацию</button>
+                                <button class="btn btn-info" onclick="openRenameModal('{{ video[0] }}')">Переименовать</button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Забаненные видео -->
+        <div id="banned" class="admin-section">
+            <h2>Забаненные видео ({{ banned_videos|length }})</h2>
+            
+            {% if banned_videos %}
+            <!-- Карточный вид для мобильных -->
+            <div class="video-cards">
+                {% for video in banned_videos %}
+                <div class="video-card">
+                    <div class="video-card-header">
+                        <div class="video-card-filename">{{ video[0] }}</div>
+                        <span class="status-badge status-banned">Забанено</span>
+                    </div>
+                    <div class="video-card-meta">
+                        <span class="status-badge orientation-{{ video[1] }}">{{ video[1] }}</span>
+                        <span>👁️ {{ video[2] }}</span>
+                        <span>📅 {{ video[4][:10] }}</span>
+                    </div>
+                    <div style="margin-bottom: 10px; font-size: 13px; color: var(--on-surface);">
+                        <strong>Причина:</strong> {{ video[3] or 'Не указана' }}
+                    </div>
+                    <div class="video-card-actions">
+                        <button class="btn btn-success" onclick="unbanVideo('{{ video[0] }}')">Разбанить</button>
+                        <button class="btn btn-danger" onclick="openDeleteModal('{{ video[0] }}')">Удалить</button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Табличный вид для десктопа -->
+            <div class="table-container">
+                <table class="video-table">
+                    <thead>
+                        <tr>
+                            <th>Файл</th>
+                            <th>Ориентация</th>
+                            <th>Просмотры</th>
+                            <th>Причина</th>
+                            <th>Дата бана</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for video in banned_videos %}
+                        <tr>
+                            <td>{{ video[0] }}</td>
+                            <td>
+                                <span class="status-badge orientation-{{ video[1] }}">
+                                    {{ video[1] }}
+                                </span>
+                            </td>
+                            <td>{{ video[2] }}</td>
+                            <td>{{ video[3] or 'Не указана' }}</td>
+                            <td>{{ video[4][:16] }}</td>
+                            <td>
+                                <button class="btn btn-success" onclick="unbanVideo('{{ video[0] }}')">Разбанить</button>
+                                <button class="btn btn-danger" onclick="openDeleteModal('{{ video[0] }}')">Удалить</button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p>Нет забаненных видео.</p>
+            {% endif %}
+        </div>
+
+        <!-- Системная информация -->
+        <div id="system" class="admin-section">
+            <h2>Системная информация</h2>
+            <div class="system-info">
+                <div class="system-card">
+                    <h3>Диск</h3>
+                    <p>Использовано: {{ system_info.disk_used }} GB / {{ system_info.disk_total }} GB</p>
+                    <p>Свободно: {{ system_info.disk_free }} GB</p>
+                    <div class="progress-bar">
+                        <div class="progress-fill {% if system_info.disk_percent > 90 %}progress-danger{% elif system_info.disk_percent > 70 %}progress-warning{% else %}progress-success{% endif %}" 
+                             style="width: {{ system_info.disk_percent }}%"></div>
+                    </div>
+                </div>
+                <div class="system-card">
+                    <h3>Память</h3>
+                    <p>Использовано: {{ system_info.memory_used }} GB / {{ system_info.memory_total }} GB</p>
+                    <p>Использование: {{ system_info.memory_percent }}%</p>
+                    <div class="progress-bar">
+                        <div class="progress-fill {% if system_info.memory_percent > 90 %}progress-danger{% elif system_info.memory_percent > 70 %}progress-warning{% else %}progress-success{% endif %}" 
+                             style="width: {{ system_info.memory_percent }}%"></div>
+                    </div>
+                </div>
+                <div class="system-card">
+                    <h3>Процессор</h3>
+                    <p>Использование: {{ system_info.cpu_percent }}%</p>
+                    <div class="progress-bar">
+                        <div class="progress-fill {% if system_info.cpu_percent > 90 %}progress-danger{% elif system_info.cpu_percent > 70 %}progress-warning{% else %}progress-success{% endif %}" 
+                             style="width: {{ system_info.cpu_percent }}%"></div>
+                    </div>
+                </div>
+                <div class="system-card">
+                    <h3>Сеть</h3>
+                    <p>Хост: {{ system_info.hostname }}</p>
+                    <p>IP: {{ system_info.local_ip }}</p>
+                    <p>Папка видео: {{ system_info.video_folder }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Логи -->
+        <div id="logs" class="admin-section">
+            <h2>Логи администратора</h2>
+            <form action="{{ url_for('admin_clear_logs') }}" method="POST" style="margin-bottom: 15px;">
+                <button type="submit" class="btn btn-danger">Очистить логи</button>
+            </form>
+            <div style="max-height: 400px; overflow-y: auto;">
+                {% for log in logs %}
+                <div class="log-entry">
+                    <div><strong>{{ log[1] }}</strong> - {{ log[2] }}</div>
+                    <div class="log-time">{{ log[3] }}</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Быстрые действия -->
+<div id="actions" class="admin-section">
+    <h2>Быстрые действия</h2>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;">
+        <form action="{{ url_for('admin_rescan_videos') }}" method="POST">
+            <button type="submit" class="btn btn-info" style="width: 100%; padding: 12px;">
+                Сканировать видео
+            </button>
+        </form>
+        <button class="btn btn-warning" style="width: 100%; padding: 12px;" onclick="openMassBanModal()">
+            Массовый бан
+        </button>
+        <button class="btn btn-success" style="width: 100%; padding: 12px;" onclick="openMassUnbanModal()">
+            Массовая разблокировка
+        </button>
+        <form action="{{ url_for('admin_fix_orientations') }}" method="POST" style="display: inline;">
+            <button type="submit" class="btn btn-warning" onclick="return confirm('Исправить ориентацию для всех видео? Это может занять некоторое время.')" style="width: 100%; padding: 12px;">
+                Исправить ориентацию видео
+            </button>
+        </form>
+        <!-- Новая кнопка "Коды" -->
+        <a href="/NanBelle_Help_11154786358" class="btn btn-info" style="width: 100%; padding: 12px; text-decoration: none; text-align: center; display: flex; align-items: center; justify-content: center;">
+            Коды
+        </a>
+    </div>
+</div>
+    </div>
+
+    <!-- Модальные окна -->
+    <div id="banModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Блокировка видео</h3>
+                <button class="modal-close" onclick="closeModal('banModal')">×</button>
+            </div>
+            <form id="banForm" action="{{ url_for('admin_ban_video') }}" method="POST">
+                <input type="hidden" id="banFilename" name="filename">
+                <div class="form-group">
+                    <label for="banReason">Причина блокировки:</label>
+                    <textarea id="banReason" name="reason" rows="3" placeholder="Необязательно"></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn" onclick="closeModal('banModal')">Отмена</button>
+                    <button type="submit" class="btn btn-danger">Забанить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="deleteModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Удаление видео</h3>
+                <button class="modal-close" onclick="closeModal('deleteModal')">×</button>
+            </div>
+            <p>Вы уверены, что хотите удалить видео "<span id="deleteFilenameText"></span>"?</p>
+            <p style="color: var(--primary-red); font-weight: bold;">Это действие нельзя отменить!</p>
+            <form id="deleteForm" action="{{ url_for('admin_delete_video') }}" method="POST">
+                <input type="hidden" id="deleteFilename" name="filename">
+                <div class="form-actions">
+                    <button type="button" class="btn" onclick="closeModal('deleteModal')">Отмена</button>
+                    <button type="submit" class="btn btn-danger">Удалить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="reorientModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Изменение ориентации</h3>
+                <button class="modal-close" onclick="closeModal('reorientModal')">×</button>
+            </div>
+            <form id="reorientForm" action="{{ url_for('admin_force_reorientation') }}" method="POST">
+                <input type="hidden" id="reorientFilename" name="filename">
+                <div class="form-group">
+                    <label for="reorientOrientation">Ориентация:</label>
+                    <select id="reorientOrientation" name="orientation">
+                        <option value="horizontal">Горизонтальная</option>
+                        <option value="vertical">Вертикальная</option>
+                    </select>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn" onclick="closeModal('reorientModal')">Отмена</button>
+                    <button type="submit" class="btn btn-info">Изменить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="renameModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Переименование видео</h3>
+                <button class="modal-close" onclick="closeModal('renameModal')">×</button>
+            </div>
+            <form id="renameForm" action="{{ url_for('admin_rename_video') }}" method="POST">
+                <input type="hidden" id="renameOldFilename" name="old_filename">
+                <div class="form-group">
+                    <label for="renameNewFilename">Новое имя файла:</label>
+                    <input type="text" id="renameNewFilename" name="new_filename" required>
+                    <small style="color: var(--on-surface); font-size: 12px;">
+                        Укажите новое имя без пути. Расширение файла будет сохранено автоматически.
+                    </small>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn" onclick="closeModal('renameModal')">Отмена</button>
+                    <button type="submit" class="btn btn-info">Переименовать</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Мобильная навигация
+        const mobileNavToggle = document.getElementById('mobileNavToggle');
+        const adminNav = document.getElementById('adminNav');
+        
+        mobileNavToggle.addEventListener('click', function() {
+            adminNav.classList.toggle('active');
+        });
+
+        // Навигация по разделам
+        function showSection(sectionId) {
+            // Скрыть все разделы
+            document.querySelectorAll('.admin-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // Показать выбранный раздел
+            document.getElementById(sectionId).classList.add('active');
+            
+            // Обновить активную кнопку навигации
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // На мобильных закрыть меню после выбора
+            if (window.innerWidth <= 767) {
+                adminNav.classList.remove('active');
+            }
+        }
+
+        // Функции для модальных окон
+        function openBanModal(filename) {
+            document.getElementById('banFilename').value = filename;
+            document.getElementById('banModal').style.display = 'flex';
+        }
+
+        function openDeleteModal(filename) {
+            document.getElementById('deleteFilename').value = filename;
+            document.getElementById('deleteFilenameText').textContent = filename;
+            document.getElementById('deleteModal').style.display = 'flex';
+        }
+
+        function openReorientModal(filename, currentOrientation) {
+            document.getElementById('reorientFilename').value = filename;
+            document.getElementById('reorientOrientation').value = currentOrientation;
+            document.getElementById('reorientModal').style.display = 'flex';
+        }
+
+        function openRenameModal(filename) {
+            document.getElementById('renameOldFilename').value = filename;
+            
+            // Получаем имя файла без расширения для удобства редактирования
+            const nameWithoutExt = filename.split('.').slice(0, -1).join('.');
+            document.getElementById('renameNewFilename').value = nameWithoutExt;
+            
+            document.getElementById('renameModal').style.display = 'flex';
+            
+            // Фокусируемся на поле ввода и выделяем текст
+            setTimeout(() => {
+                const input = document.getElementById('renameNewFilename');
+                input.focus();
+                input.select();
+            }, 100);
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        // Быстрые действия
+        function unbanVideo(filename) {
+            if (confirm(`Разблокировать видео "${filename}"?`)) {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = "{{ url_for('admin_unban_video') }}";
+                
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'filename';
+                input.value = filename;
+                
+                form.appendChild(input);
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+
+        function viewVideo(filename) {
+            window.open(`/watch/${encodeURIComponent(filename)}`, '_blank');
+        }
+
+        // Закрытие модальных окон при клике вне их
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.style.display = 'none';
+            }
+        }
+
+        // Закрытие модальных окон по ESC
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                document.querySelectorAll('.modal').forEach(modal => {
+                    modal.style.display = 'none';
+                });
+            }
+        });
+
+        // Автоматическое обновление системной информации каждые 30 секунд
+        setInterval(() => {
+            if (document.getElementById('system').classList.contains('active')) {
+                location.reload();
+            }
+        }, 30000);
+
+        // Улучшение для мобильных устройств
+        document.addEventListener('DOMContentLoaded', function() {
+            // Оптимизация для медленных устройств
+            if ('connection' in navigator && navigator.connection.saveData) {
+                console.log('Режим экономии трафика включен');
+            }
+            
+            // Предотвращение масштабирования при фокусе на iOS
+            const inputs = document.querySelectorAll('input, textarea, select');
+            inputs.forEach(input => {
+                input.addEventListener('focus', function() {
+                    setTimeout(() => {
+                        window.scrollTo(0, 0);
+                    }, 100);
+                });
+            });
+        });
+
+        // Обработка изменения ориентации устройства
+        window.addEventListener('orientationchange', function() {
+            setTimeout(() => {
+                // Пересчет layout при необходимости
+            }, 300);
+        });
+
+        // Улучшение производительности на мобильных
+        if ('serviceWorker' in navigator) {
+            // Возможность добавить Service Worker для кэширования
+        }
+    </script>
+</body>
+</html>

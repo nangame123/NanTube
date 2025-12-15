@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ display_name }} - NanTube</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+
+    <style>
+        :root {
+            --primary-orange: #ff6d00;
+            --primary-blue: #2962ff;
+            --background: #ffffff;
+            --surface: #f9f9f9;
+            --on-background: #030303;
+            --on-surface: #606060;
+            --border: #e5e5e5;
+            --hover: #f2f2f2;
+        }
+
+        [data-theme="dark"] {
+            --background: #0f0f0f;
+            --surface: #272727;
+            --on-background: #f1f1f1;
+            --on-surface: #aaa;
+            --border: #373737;
+            --hover: #272727;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', Arial, sans-serif;
+            background-color: var(--background);
+            color: var(--on-background);
+            line-height: 1.5;
+            overflow-x: hidden;
+        }
+
+        .watch-container {
+            display: flex;
+            flex-direction: column;
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 76px 16px 80px 16px;
+            gap: 24px;
+        }
+
+        /* Video Player Section - улучшено для мобильных */
+        .video-player-section {
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .video-container {
+            width: 100%;
+            background-color: #000;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 20px;
+            padding-bottom: 56.25%; /* 16:9 aspect ratio */
+        }
+
+        .video-player {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: block;
+            object-fit: contain;
+        }
+
+        .video-info {
+            padding: 0;
+        }
+
+        .video-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: var(--on-background);
+            word-wrap: break-word;
+            line-height: 1.4;
+        }
+
+        /* YouTube-like Description */
+        .description-container {
+            background-color: var(--surface);
+            border-radius: 12px;
+            padding: 16px;
+            margin: 20px 0;
+        }
+
+        .description-stats {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 12px;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .description-text {
+            color: var(--on-background);
+            line-height: 1.6;
+            white-space: pre-line;
+            max-height: 85px;
+            overflow: hidden;
+            font-size: 14px;
+        }
+
+        .description-text.expanded {
+            max-height: none;
+        }
+
+        .show-more-btn {
+            background: none;
+            border: none;
+            color: var(--on-surface);
+            cursor: pointer;
+            font-weight: 500;
+            margin-top: 10px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+        }
+
+        .video-actions {
+            display: flex;
+            gap: 12px;
+            padding: 16px 0;
+            border-bottom: 1px solid var(--border);
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        .action-button {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: none;
+            border: none;
+            color: var(--on-background);
+            cursor: pointer;
+            font-size: 14px;
+            padding: 10px 16px;
+            border-radius: 20px;
+            background-color: var(--surface);
+            flex: 1;
+            min-width: 120px;
+            justify-content: center;
+        }
+
+        /* Recommendations Section */
+        .recommendations-section {
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: var(--on-background);
+        }
+
+        .recommendation-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 16px;
+        }
+
+        @media (min-width: 768px) {
+            .recommendation-list {
+                grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            }
+        }
+
+        .recommendation-card {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            text-decoration: none;
+            color: inherit;
+            background-color: var(--surface);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: transform 0.2s;
+        }
+
+        .recommendation-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .recommendation-thumbnail {
+            position: relative;
+            width: 100%;
+            padding-bottom: 56.25%;
+            border-radius: 12px 12px 0 0;
+            overflow: hidden;
+            background-color: #000;
+        }
+
+        .recommendation-thumbnail video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .video-duration {
+            position: absolute;
+            bottom: 8px;
+            right: 8px;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 4px 6px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .recommendation-info {
+            padding: 12px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .recommendation-title {
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            color: var(--on-background);
+            line-height: 1.4;
+        }
+
+        .recommendation-meta {
+            font-size: 12px;
+            color: var(--on-surface);
+            line-height: 1.4;
+        }
+
+        .channel-name {
+            margin-bottom: 4px;
+        }
+
+        .video-stats {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .dot-separator {
+            width: 4px;
+            height: 4px;
+            background-color: var(--on-surface);
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        /* Модальные окна остаются без изменений */
+        .share-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+
+        .share-modal-content {
+            background-color: var(--background);
+            border-radius: 12px;
+            padding: 20px;
+            width: 100%;
+            max-width: 400px;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        /* Desktop Layout */
+        @media (min-width: 1024px) {
+            .watch-container {
+                flex-direction: row;
+                max-width: 1400px;
+                padding: 86px 24px 24px 24px;
+                gap: 32px;
+            }
+
+            .video-player-section {
+                flex: 1;
+                margin-top: 0;
+            }
+
+            .recommendations-section {
+                width: 400px;
+                flex-shrink: 0;
+                margin-top: 0;
+            }
+
+            .video-title {
+                font-size: 24px;
+            }
+
+            .recommendation-list {
+                display: flex;
+                flex-direction: column;
+                gap: 16px;
+            }
+
+            .recommendation-card {
+                flex-direction: row;
+                gap: 12px;
+            }
+
+            .recommendation-thumbnail {
+                width: 180px;
+                height: 100px;
+                padding-bottom: 0;
+                flex-shrink: 0;
+            }
+
+            .recommendation-thumbnail video {
+                position: relative;
+                width: 100%;
+                height: 100%;
+            }
+
+            .recommendation-info {
+                padding: 8px 12px;
+            }
+        }
+
+        /* Tablet */
+        @media (max-width: 1023px) and (min-width: 768px) {
+            .watch-container {
+                padding: 76px 20px 80px 20px;
+            }
+
+            .video-title {
+                font-size: 22px;
+            }
+        }
+
+        /* Mobile */
+        @media (max-width: 767px) {
+            .watch-container {
+                padding: 76px 12px 80px 12px;
+            }
+
+            .video-container {
+                border-radius: 8px;
+                margin-bottom: 16px;
+            }
+
+            .video-title {
+                font-size: 18px;
+                margin-bottom: 12px;
+            }
+
+            .description-container {
+                padding: 12px;
+                margin: 16px 0;
+            }
+
+            .video-actions {
+                gap: 8px;
+                padding: 12px 0;
+                margin-top: 16px;
+            }
+
+            .action-button {
+                min-width: 100px;
+                padding: 8px 12px;
+                font-size: 13px;
+            }
+
+            .recommendation-list {
+                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+                gap: 12px;
+            }
+        }
+
+        /* Small Mobile */
+        @media (max-width: 480px) {
+            .watch-container {
+                padding: 76px 8px 80px 8px;
+            }
+
+            .video-title {
+                font-size: 16px;
+            }
+
+            .action-button {
+                flex: 1 1 calc(50% - 8px);
+                min-width: auto;
+                padding: 8px 10px;
+                font-size: 12px;
+            }
+
+            .recommendation-list {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Шапка -->
+    <header class="youtube-header">
+        <div class="header-left">
+            <button class="menu-toggle" id="menuToggle">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M3 18H21V16H3V18ZM3 13H21V11H3V13ZM3 6V8H21V6H3Z" fill="currentColor"/>
+                </svg>
+            </button>
+            <a href="{{ url_for('index') }}" class="logo">
+                <div class="logo-container">
+                    <div class="logo-icon">
+                        <svg width="90" height="20" viewBox="0 0 90 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M27.58 10.22L25.24 7.88V12.56L27.58 10.22Z" fill="#FF6B35"/>
+                            <path d="M19.67 4.34C17.45 4.34 15.64 6.15 15.64 8.37V11.63C15.64 13.85 17.45 15.66 19.67 15.66C21.89 15.66 23.7 13.85 23.7 11.63V8.37C23.7 6.15 21.89 4.34 19.67 4.34Z" fill="#FF6B35"/>
+                        </svg>
+                    </div>
+                    <span class="logo-text">NanTube</span>
+                </div>
+            </a>
+        </div>
+        
+        <!-- Поисковая строка -->
+        <div class="search-container youtube-search">
+            <div class="search-box youtube-search-box">
+                <input type="text" class="search-input youtube-search-input" id="searchInput" 
+                       placeholder="Поиск видео...">
+                <button class="search-button youtube-search-button" id="searchButton">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M15.5 14H14.71L14.43 13.73C15.41 12.59 16 11.11 16 9.5C16 5.91 13.09 3 9.5 3C5.91 3 3 5.91 3 9.5C3 13.09 5.91 16 9.5 16C11.11 16 12.59 15.41 13.73 14.43L14 14.71V15.5L19 20.49L20.49 19L15.5 14ZM9.5 14C7.01 14 5 11.99 5 9.5C5 7.01 7.01 5 9.5 5C11.99 5 14 7.01 14 9.5C14 11.99 11.99 14 9.5 14Z" fill="currentColor"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <div class="header-right">
+            <a href="{{ url_for('upload_file') }}" class="header-btn upload-btn">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M14 13V17H10V13H7L12 8L17 13H14ZM19 19H5V21H19V19Z" fill="currentColor"/>
+                </svg>
+                <span class="btn-text">Загрузить</span>
+            </a>
+            <a href="{{ url_for('settings') }}" class="header-btn">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 15.5C13.93 15.5 15.5 13.93 15.5 12C15.5 10.07 13.93 8.5 12 8.5C10.07 8.5 8.5 10.07 8.5 12C8.5 13.93 10.07 15.5 12 15.5ZM12 10.5C12.83 10.5 13.5 11.17 13.5 12C13.5 12.83 12.83 13.5 12 13.5C11.17 13.5 10.5 12.83 10.5 12C10.5 11.17 11.17 10.5 12 10.5ZM5.05 19H7C7 17.9 7.9 17 9 17H15C16.1 17 17 17.9 17 19H18.95C18.45 15.17 15.83 12.55 12 12.05V10H10V12.05C6.17 12.55 3.55 15.17 3.05 19H5.05ZM19 19H21C20.5 14.83 17.17 11.5 13 11V9H11V11C6.83 11.5 3.5 14.83 3 19H5C5.5 15.83 8.17 13 12 13C15.83 13 18.5 15.83 19 19Z" fill="currentColor"/>
+                </svg>
+            </a>
+            <button class="theme-toggle header-btn" id="themeToggle">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22ZM12 20V4C16.4183 4 20 7.58172 20 12C20 16.4183 16.4183 20 12 20Z" fill="currentColor"/>
+                </svg>
+            </button>
+            <div class="user-avatar">NT</div>
+        </div>
+    </header>
+
+    <!-- Модальное окно для поделиться -->
+    <div class="share-modal" id="shareModal">
+        <div class="share-modal-content">
+            <div class="share-modal-header">
+                <h3 class="share-modal-title">Поделиться</h3>
+                <button class="close-modal" id="closeModal">&times;</button>
+            </div>
+            
+            <div class="share-link-container">
+                <input type="text" class="share-link-input" id="shareLinkInput" value="" readonly>
+                <button class="copy-link-btn" id="copyLinkBtn">Копировать</button>
+            </div>
+            
+            <div class="share-platforms">
+                <button class="share-platform" data-platform="whatsapp">
+                    <span class="platform-icon">📱</span>
+                    <span class="platform-name">WhatsApp</span>
+                </button>
+                <button class="share-platform" data-platform="telegram">
+                    <span class="platform-icon">✈️</span>
+                    <span class="platform-name">Telegram</span>
+                </button>
+                <button class="share-platform" data-platform="vkontakte">
+                    <span class="platform-icon">👥</span>
+                    <span class="platform-name">ВКонтакте</span>
+                </button>
+                <button class="share-platform" data-platform="twitter">
+                    <span class="platform-icon">🐦</span>
+                    <span class="platform-name">Twitter</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="watch-container">
+        <div class="video-player-section">
+            <div class="video-container">
+                <video class="video-player" controls autoplay id="mainVideo">
+                    <source src="{{ url_for('serve_video', filename=filename) }}" type="video/mp4">
+                    Ваш браузер не поддерживает видео тег.
+                </video>
+            </div>
+            
+            <div class="video-info">
+                <h1 class="video-title">{{ display_name }}</h1>
+                
+                <div class="description-container">
+                    <div class="description-stats">
+                        <span>NanTube</span>
+                        <span>•</span>
+                        <span>Видео из E:\videos</span>
+                    </div>
+                    <div class="description-text" id="descriptionText">
+Это видео было скопировано из локальной папки E:\videos и загружено на платформу NanTube. 
+Вы можете просматривать его в высоком качестве, делиться с друзьями или скачать для офлайн-просмотра.
+Лучше него вы не сможете найти(наверное)
+                    </div>
+                    <button class="show-more-btn" id="showMoreBtn">
+                        <span>Ещё</span>
+                    </button>
+                </div>
+                
+                <div class="video-actions">
+                    <button class="action-button" id="likeButton">
+                        <span>👍</span> Нравится
+                    </button>
+                    <button class="action-button" id="shareButton">
+                        <span>🔗</span> Поделиться
+                    </button>
+                    <button class="action-button" onclick="downloadVideo()">
+                        <span>⬇️</span> Скачать
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Рекомендации -->
+        <div class="recommendations-section">
+            <h3 class="section-title">Рекомендуем посмотреть</h3>
+            <div class="recommendation-list">
+                {% for video in other_videos[:20] %}
+                <a href="{{ url_for('watch_video', filename=video[0]) }}" class="recommendation-card">
+                    <div class="recommendation-thumbnail">
+                        <video muted preload="metadata">
+                            <source src="{{ url_for('serve_video', filename=video[0]) }}#t=1" type="video/mp4">
+                        </video>
+                        <span class="video-duration" data-filename="{{ video[0] }}">--:--</span>
+                    </div>
+                    <div class="recommendation-info">
+                        <div class="recommendation-title">{{ video[1] }}</div>
+                        <div class="recommendation-meta">
+                            <div class="channel-name">NanTube</div>
+                            <div class="video-stats">
+                                <span class="view-count" data-filename="{{ video[0] }}">0 просмотров</span>
+                                <span class="dot-separator"></span>
+                                <span>1 день назад</span>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Инициализация темы
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            
+            const themeToggle = document.getElementById('themeToggle');
+            if (themeToggle) {
+                updateThemeIcon(themeToggle, savedTheme);
+                
+                themeToggle.addEventListener('click', function() {
+                    const currentTheme = document.documentElement.getAttribute('data-theme');
+                    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                    document.documentElement.setAttribute('data-theme', newTheme);
+                    localStorage.setItem('theme', newTheme);
+                    updateThemeIcon(this, newTheme);
+                });
+            }
+        }
+
+        function updateThemeIcon(button, theme) {
+            if (theme === 'dark') {
+                button.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 7C14.76 7 17 9.24 17 12C17 14.76 14.76 17 12 17C9.24 17 7 14.76 7 12C7 9.24 9.24 7 12 7ZM12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM12 20C7.58 20 4 16.42 4 12C4 7.58 7.58 4 12 4C16.42 4 20 7.58 20 12C20 16.42 16.42 20 12 20Z" fill="currentColor"/></svg>';
+            } else {
+                button.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22ZM12 20V4C16.4183 4 20 7.58172 20 12C20 16.4183 16.4183 20 12 20Z" fill="currentColor"/></svg>';
+            }
+        }
+
+        // Video actions
+        const likeButton = document.getElementById('likeButton');
+        let liked = false;
+        
+        likeButton.addEventListener('click', () => {
+            liked = !liked;
+            likeButton.innerHTML = liked ? 
+                '<span>👍</span> Понравилось' : 
+                '<span>👍</span> Нравится';
+        });
+
+        // Share Modal
+        const shareModal = document.getElementById('shareModal');
+        const shareButton = document.getElementById('shareButton');
+        const closeModal = document.getElementById('closeModal');
+        const shareLinkInput = document.getElementById('shareLinkInput');
+        const copyLinkBtn = document.getElementById('copyLinkBtn');
+        const sharePlatforms = document.querySelectorAll('.share-platform');
+        
+        const currentUrl = window.location.href;
+        shareLinkInput.value = currentUrl;
+        
+        function openShareModal() {
+            shareModal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+        
+        shareButton.addEventListener('click', openShareModal);
+        
+        function closeShareModal() {
+            shareModal.style.display = 'none';
+            document.body.style.overflow = '';
+        }
+        
+        closeModal.addEventListener('click', closeShareModal);
+        
+        window.addEventListener('click', (event) => {
+            if (event.target === shareModal) {
+                closeShareModal();
+            }
+        });
+        
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && shareModal.style.display === 'flex') {
+                closeShareModal();
+            }
+        });
+        
+        copyLinkBtn.addEventListener('click', () => {
+            shareLinkInput.select();
+            
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(shareLinkInput.value)
+                    .then(() => showCopyFeedback())
+                    .catch(() => {
+                        document.execCommand('copy');
+                        showCopyFeedback();
+                    });
+            } else {
+                document.execCommand('copy');
+                showCopyFeedback();
+            }
+        });
+        
+        function showCopyFeedback() {
+            const originalText = copyLinkBtn.textContent;
+            copyLinkBtn.textContent = 'Скопировано!';
+            copyLinkBtn.classList.add('copied');
+            
+            setTimeout(() => {
+                copyLinkBtn.textContent = originalText;
+                copyLinkBtn.classList.remove('copied');
+            }, 2000);
+        }
+        
+        sharePlatforms.forEach(platform => {
+            platform.addEventListener('click', () => {
+                const platformName = platform.getAttribute('data-platform');
+                const videoTitle = '{{ display_name }}';
+                const url = encodeURIComponent(currentUrl);
+                const text = encodeURIComponent(`Смотри "${videoTitle}" на NanTube: ${currentUrl}`);
+                
+                let shareUrl;
+                
+                switch(platformName) {
+                    case 'whatsapp':
+                        shareUrl = `https://wa.me/?text=${text}`;
+                        break;
+                    case 'telegram':
+                        shareUrl = `https://t.me/share/url?url=${url}&text=${encodeURIComponent(videoTitle)}`;
+                        break;
+                    case 'vkontakte':
+                        shareUrl = `https://vk.com/share.php?url=${url}&title=${encodeURIComponent(videoTitle)}`;
+                        break;
+                    case 'twitter':
+                        shareUrl = `https://twitter.com/intent/tweet?text=${text}`;
+                        break;
+                    default:
+                        return;
+                }
+                
+                if (window.innerWidth <= 768) {
+                    window.location.href = shareUrl;
+                } else {
+                    window.open(shareUrl, '_blank', 'width=600,height=400');
+                }
+            });
+        });
+
+        // Download functionality
+        function downloadVideo() {
+            const videoUrl = "{{ url_for('serve_video', filename=filename) }}";
+            const a = document.createElement('a');
+            a.href = videoUrl;
+            a.download = '{{ display_name }}';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        // Expand/Collapse description
+        const descriptionText = document.getElementById('descriptionText');
+        const showMoreBtn = document.getElementById('showMoreBtn');
+        
+        if (showMoreBtn && descriptionText) {
+            showMoreBtn.addEventListener('click', () => {
+                const isExpanded = descriptionText.classList.contains('expanded');
+                
+                if (isExpanded) {
+                    descriptionText.classList.remove('expanded');
+                    showMoreBtn.innerHTML = '<span>Ещё</span>';
+                } else {
+                    descriptionText.classList.add('expanded');
+                    showMoreBtn.innerHTML = '<span>Свернуть</span>';
+                }
+            });
+        }
+
+        // Поиск
+        function performSearch() {
+            const searchTerm = document.getElementById('searchInput').value.trim();
+            if (searchTerm) {
+                window.location.href = "{{ url_for('index') }}?search=" + encodeURIComponent(searchTerm);
+            }
+        }
+
+        document.getElementById('searchButton').addEventListener('click', performSearch);
+        document.getElementById('searchInput').addEventListener('keyup', (event) => {
+            if (event.key === 'Enter') {
+                performSearch();
+            }
+        });
+
+        // Получение длительности видео для рекомендаций
+        function getVideoDurations() {
+            const durationElements = document.querySelectorAll('.video-duration');
+            
+            durationElements.forEach(element => {
+                const filename = element.getAttribute('data-filename');
+                if (filename) {
+                    const videoUrl = `/video/${filename}`;
+                    
+                    const video = document.createElement('video');
+                    video.preload = 'metadata';
+                    
+                    video.onloadedmetadata = function() {
+                        if (!isNaN(video.duration)) {
+                            const duration = video.duration;
+                            const minutes = Math.floor(duration / 60);
+                            const seconds = Math.floor(duration % 60);
+                            const formattedTime = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                            element.textContent = formattedTime;
+                        }
+                    };
+                    
+                    video.src = videoUrl;
+                }
+            });
+        }
+
+        // Генерация случайных просмотров
+        function generateRandomViewCounts() {
+            const viewElements = document.querySelectorAll('.view-count');
+            
+            viewElements.forEach(element => {
+                const views = Math.floor(Math.random() * 1000000) + 1000;
+                let formattedViews;
+                
+                if (views >= 1000000) {
+                    formattedViews = `${(views / 1000000).toFixed(1)}M просмотров`;
+                } else if (views >= 1000) {
+                    formattedViews = `${(views / 1000).toFixed(0)}K просмотров`;
+                } else {
+                    formattedViews = `${views} просмотров`;
+                }
+                
+                element.textContent = formattedViews;
+            });
+        }
+
+        // Инициализация при загрузке
+        window.addEventListener('load', () => {
+            initTheme();
+            getVideoDurations();
+            generateRandomViewCounts();
+            
+            // Проверка высоты описания
+            if (descriptionText && descriptionText.scrollHeight <= 85) {
+                showMoreBtn.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>

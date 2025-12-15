@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <title>Загрузка видео - NanTube</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        :root {
+            --primary-orange: #ff6d00;
+            --primary-blue: #2962ff;
+            --background: #ffffff;
+            --surface: #f9f9f9;
+            --on-background: #030303;
+            --on-surface: #606060;
+            --border: #e5e5e5;
+            --hover: #f2f2f2;
+        }
+
+        [data-theme="dark"] {
+            --background: #0f0f0f;
+            --surface: #272727;
+            --on-background: #f1f1f1;
+            --on-surface: #aaa;
+            --border: #373737;
+            --hover: #272727;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', Arial, sans-serif;
+            background-color: var(--background);
+            color: var(--on-background);
+            line-height: 1.5;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .upload-container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 30px;
+            gap: 15px;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--primary-orange);
+            text-decoration: none;
+        }
+
+        .logo span {
+            color: var(--primary-blue);
+        }
+
+        h1 {
+            color: var(--on-background);
+            margin-bottom: 30px;
+            font-size: 28px;
+            text-align: center;
+        }
+
+        .back-btn {
+            padding: 12px 20px;
+            background-color: var(--primary-blue);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 25px;
+            font-size: 15px;
+            transition: all 0.3s;
+            width: 100%;
+        }
+
+        @media (min-width: 480px) {
+            .back-btn {
+                width: auto;
+            }
+        }
+
+        .back-btn:hover {
+            background-color: #1a53ff;
+            transform: translateY(-2px);
+        }
+
+        .upload-card {
+            background-color: var(--surface);
+            border-radius: 16px;
+            padding: 25px;
+            border: 2px dashed var(--border);
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .upload-card:hover {
+            border-color: var(--primary-orange);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        [data-theme="dark"] .upload-card:hover {
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .file-input-area {
+            text-align: center;
+            padding: 40px 20px;
+            cursor: pointer;
+            border-radius: 12px;
+            background-color: var(--background);
+            border: 2px solid var(--border);
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .file-input-area:hover {
+            border-color: var(--primary-orange);
+            background-color: var(--hover);
+        }
+
+        .file-input-area.drag-over {
+            border-color: var(--primary-orange);
+            background-color: rgba(255, 107, 53, 0.1);
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            color: var(--primary-orange);
+            margin-bottom: 15px;
+        }
+
+        .upload-text {
+            font-size: 18px;
+            font-weight: 500;
+            color: var(--on-background);
+            margin-bottom: 10px;
+        }
+
+        .upload-subtext {
+            font-size: 14px;
+            color: var(--on-surface);
+            margin-bottom: 20px;
+        }
+
+        .file-input {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .selected-file {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: var(--background);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            display: none;
+        }
+
+        .selected-file.show {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+
+        .file-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .file-icon {
+            font-size: 24px;
+            color: var(--primary-orange);
+        }
+
+        .file-details {
+            flex: 1;
+        }
+
+        .file-name {
+            font-weight: 500;
+            color: var(--on-background);
+            word-break: break-all;
+        }
+
+        .file-size {
+            font-size: 13px;
+            color: var(--on-surface);
+            margin-top: 5px;
+        }
+
+        /* Ориентация видео */
+        .orientation-section {
+            margin-top: 25px;
+        }
+
+        .orientation-title {
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--on-background);
+            margin-bottom: 15px;
+        }
+
+        .orientation-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+        }
+
+        @media (min-width: 480px) {
+            .orientation-options {
+                display: flex;
+                gap: 15px;
+            }
+        }
+
+        .orientation-option {
+            flex: 1;
+            text-align: center;
+            padding: 20px 15px;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            background-color: var(--background);
+        }
+
+        .orientation-option:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .orientation-option.selected {
+            border-color: var(--primary-orange);
+            background-color: rgba(255, 107, 53, 0.1);
+        }
+
+        .orientation-icon {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .orientation-name {
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: var(--on-background);
+        }
+
+        .orientation-description {
+            font-size: 12px;
+            color: var(--on-surface);
+        }
+
+        /* Кнопка отправки */
+        .submit-section {
+            margin-top: 30px;
+            text-align: center;
+        }
+
+        .submit-btn {
+            padding: 16px 32px;
+            background: linear-gradient(135deg, var(--primary-orange), #ff8e53);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s;
+            width: 100%;
+            max-width: 300px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(255, 107, 53, 0.3);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+        /* Flash сообщения */
+        .flash-messages {
+            list-style-type: none;
+            margin-bottom: 20px;
+        }
+
+        .flash-messages li {
+            padding: 15px 20px;
+            margin: 10px 0;
+            border-radius: 12px;
+            font-weight: 500;
+            animation: slideIn 0.3s;
+        }
+
+        .flash-success {
+            background-color: rgba(76, 175, 80, 0.1);
+            color: #4caf50;
+            border: 1px solid rgba(76, 175, 80, 0.2);
+        }
+
+        .flash-error {
+            background-color: rgba(244, 67, 54, 0.1);
+            color: #f44336;
+            border: 1px solid rgba(244, 67, 54, 0.2);
+        }
+
+        /* Анимации */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(-20px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* Прогресс бар */
+        .progress-container {
+            margin-top: 20px;
+            display: none;
+        }
+
+        .progress-container.show {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+
+        .progress-bar {
+            height: 6px;
+            background-color: var(--border);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, var(--primary-orange), #ff8e53);
+            border-radius: 3px;
+            transition: width 0.3s;
+            width: 0%;
+        }
+
+        .progress-text {
+            text-align: center;
+            font-size: 14px;
+            color: var(--on-surface);
+        }
+
+        /* Мобильная адаптация */
+        @media (max-width: 768px) {
+            body {
+                padding: 15px;
+            }
+            
+            .upload-container {
+                padding: 15px;
+            }
+            
+            h1 {
+                font-size: 24px;
+                margin-bottom: 20px;
+            }
+            
+            .upload-card {
+                padding: 20px;
+            }
+            
+            .file-input-area {
+                padding: 30px 15px;
+            }
+            
+            .upload-icon {
+                font-size: 40px;
+            }
+            
+            .upload-text {
+                font-size: 16px;
+            }
+            
+            .orientation-options {
+                grid-template-columns: 1fr;
+            }
+            
+            .submit-btn {
+                width: 100%;
+                max-width: none;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+            
+            .upload-container {
+                padding: 10px;
+            }
+            
+            .upload-card {
+                padding: 15px;
+            }
+            
+            .file-input-area {
+                padding: 20px 10px;
+            }
+            
+            .orientation-option {
+                padding: 15px 10px;
+            }
+        }
+
+        /* Темный режим */
+        [data-theme="dark"] .upload-card {
+            border-color: #444;
+        }
+
+        [data-theme="dark"] .file-input-area {
+            background-color: #1a1a1a;
+            border-color: #444;
+        }
+
+        [data-theme="dark"] .selected-file {
+            background-color: #1a1a1a;
+            border-color: #444;
+        }
+
+        [data-theme="dark"] .orientation-option {
+            background-color: #1a1a1a;
+            border-color: #444;
+        }
+    </style>
+</head>
+<body>
+    <div class="upload-container">
+        <div class="header">
+            <a href="{{ url_for('index') }}" class="logo">NanTube</a>
+        </div>
+
+        <a href="{{ url_for('index') }}" class="back-btn">← Назад к галерее</a>
+
+        <h1>Загрузить новое видео</h1>
+
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <ul class="flash-messages">
+                {% for message in messages %}
+                    <li class="{% if 'успешно' in message %}flash-success{% else %}flash-error{% endif %}">
+                        {{ message }}
+                    </li>
+                {% endfor %}
+                </ul>
+            {% endif %}
+        {% endwith %}
+
+        <form method="post" enctype="multipart/form-data" id="uploadForm" class="upload-form">
+            <div class="upload-card">
+                <!-- Область загрузки файла -->
+                <div class="file-input-area" id="fileInputArea">
+                    <div class="upload-icon">📁</div>
+                    <div class="upload-text">Нажмите или перетащите файл</div>
+                    <div class="upload-subtext">MP4, AVI, MOV, MKV до 2GB</div>
+                    <input type="file" name="file" id="fileInput" class="file-input" accept="video/*" required>
+                </div>
+
+                <!-- Выбранный файл -->
+                <div class="selected-file" id="selectedFile">
+                    <div class="file-info">
+                        <div class="file-icon">🎬</div>
+                        <div class="file-details">
+                            <div class="file-name" id="fileName">Название файла.mp4</div>
+                            <div class="file-size" id="fileSize">0 MB</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Прогресс загрузки -->
+                <div class="progress-container" id="progressContainer">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <div class="progress-text" id="progressText">Загрузка 0%</div>
+                </div>
+
+                <!-- Выбор ориентации -->
+                <div class="orientation-section">
+                    <div class="orientation-title">Ориентация видео:</div>
+                    <div class="orientation-options">
+                        <div class="orientation-option" data-value="horizontal">
+                            <div class="orientation-icon">📺</div>
+                            <div class="orientation-name">Горизонтальное</div>
+                            <div class="orientation-description">16:9 (обычное)</div>
+                        </div>
+                        <div class="orientation-option" data-value="vertical">
+                            <div class="orientation-icon">📱</div>
+                            <div class="orientation-name">Вертикальное</div>
+                            <div class="orientation-description">9:16 (для телефона)</div>
+                        </div>
+                    </div>
+                    <input type="hidden" name="orientation" id="orientationInput" value="horizontal" required>
+                </div>
+
+                <!-- Кнопка отправки -->
+                <div class="submit-section">
+                    <button type="submit" class="submit-btn" id="submitBtn" disabled>
+                        <span>📤</span>
+                        Загрузить видео
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        // Элементы DOM
+        const fileInput = document.getElementById('fileInput');
+        const fileInputArea = document.getElementById('fileInputArea');
+        const selectedFile = document.getElementById('selectedFile');
+        const fileName = document.getElementById('fileName');
+        const fileSize = document.getElementById('fileSize');
+        const submitBtn = document.getElementById('submitBtn');
+        const orientationOptions = document.querySelectorAll('.orientation-option');
+        const orientationInput = document.getElementById('orientationInput');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressFill = document.getElementById('progressFill');
+        const progressText = document.getElementById('progressText');
+
+        // Перетаскивание файлов
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            fileInputArea.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            fileInputArea.addEventListener(eventName, highlight, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            fileInputArea.addEventListener(eventName, unhighlight, false);
+        });
+
+        function highlight() {
+            fileInputArea.classList.add('drag-over');
+        }
+
+        function unhighlight() {
+            fileInputArea.classList.remove('drag-over');
+        }
+
+        // Обработка перетаскивания файла
+        fileInputArea.addEventListener('drop', handleDrop, false);
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            
+            if (files.length > 0) {
+                fileInput.files = files;
+                handleFileSelect(files[0]);
+            }
+        }
+
+        // Обработка выбора файла
+        fileInput.addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                handleFileSelect(this.files[0]);
+            }
+        });
+
+        function handleFileSelect(file) {
+            // Проверка типа файла
+            if (!file.type.startsWith('video/')) {
+                alert('Пожалуйста, выберите видео файл');
+                return;
+            }
+
+            // Проверка размера файла (2GB)
+            if (file.size > 2 * 1024 * 1024 * 1024) {
+                alert('Файл слишком большой. Максимальный размер: 2GB');
+                return;
+            }
+
+            // Показать информацию о файле
+            fileName.textContent = file.name;
+            fileSize.textContent = formatFileSize(file.size);
+            selectedFile.classList.add('show');
+
+            // Активировать кнопку отправки
+            submitBtn.disabled = false;
+
+            // Скрыть прогресс бар если он был показан
+            progressContainer.classList.remove('show');
+        }
+
+        // Форматирование размера файла
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // Обработка выбора ориентации
+        orientationOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                // Убираем выделение со всех опций
+                orientationOptions.forEach(opt => opt.classList.remove('selected'));
+                // Выделяем выбранную опцию
+                option.classList.add('selected');
+                // Устанавливаем значение в скрытое поле
+                orientationInput.value = option.getAttribute('data-value');
+            });
+        });
+
+        // Выбираем горизонтальную ориентацию по умолчанию
+        document.querySelector('.orientation-option[data-value="horizontal"]').classList.add('selected');
+
+        // Обработка отправки формы
+        const form = document.getElementById('uploadForm');
+        form.addEventListener('submit', function(e) {
+            if (!fileInput.files.length) {
+                e.preventDefault();
+                alert('Пожалуйста, выберите видео файл');
+                return;
+            }
+
+            // Показать прогресс бар
+            progressContainer.classList.add('show');
+            progressFill.style.width = '0%';
+            progressText.textContent = 'Подготовка к загрузке...';
+
+            // Отключить кнопку отправки
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span>⏳</span> Загрузка...';
+
+            // Имитация прогресса (в реальном приложении используйте XMLHttpRequest с событиями прогресса)
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += Math.random() * 10;
+                if (progress > 90) progress = 90;
+                
+                progressFill.style.width = progress + '%';
+                progressText.textContent = `Загрузка ${Math.round(progress)}%`;
+                
+                if (progress >= 90) {
+                    clearInterval(interval);
+                }
+            }, 200);
+        });
+
+        // Инициализация темы
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        }
+
+        // Инициализация при загрузке
+        window.addEventListener('DOMContentLoaded', initTheme);
+    </script>
+</body>
+</html>
