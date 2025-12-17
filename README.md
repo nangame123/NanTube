@@ -9,4 +9,4 @@
 - Запускаете app.py
 
 # Кто автор
-[Я - Ютуб]((https://www.youtube.com/channel/UCmP3I_iOGIfu_lFeQk12-WA?ysclid=mj7dq8nd6l680656007)
+[Я - Ютуб](([https://www.youtube.com/channel/UCmP3I_iOGIfu_lFeQk12-WA?ysclid=mj7dq8nd6l68065600](https://www.youtube.com/@NanBelle-228)7)
