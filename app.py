@@ -28,7 +28,7 @@ def get_all_videos():
     return videos
 
 app = Flask(__name__)
-app.secret_key = 'your_secret_key_here'
+app.secret_key = 'secret_key_here'
 
 db_lock = threading.Lock()
 
@@ -44,7 +44,7 @@ VIDEO_FOLDER = r'E:\videos'  # Измените на абсолютный пут
 ALLOWED_EXTENSIONS = {'mp4', 'avi', 'mov', 'mkv', 'webm'}
 DATABASE_PATH = 'video_database.db'
 
-# Добавляем переменную для хранения статуса админского доступа
+# Хранения статуса админского доступа
 admin_access = False
 
 @app.route('/random_vertical')
